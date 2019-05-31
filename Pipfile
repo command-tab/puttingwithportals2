@@ -1,0 +1,10 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+smbus2 = "==0.2.3"
+'rpi.gpio' = "==0.6.3"

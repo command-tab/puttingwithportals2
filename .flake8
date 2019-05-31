@@ -1,0 +1,4 @@
+[flake8]
+format = %(path)s:%(row)d:%(col)d: %(code)s %(text)s
+ignore = E402,E501
+exclude = .git,__pycache__
