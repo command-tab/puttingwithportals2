@@ -41,7 +41,8 @@ class MP3Trigger(object):
         """
         Stops any currently playing track
         """
-        self.bus.write_byte_data(self.device_address, self.COMMAND_STOP)
+        self.bus.write_byte(self.device_address, self.COMMAND_STOP)
+        sleep(0.05)
 
     def play_track(self, track_number):
         """
@@ -49,30 +50,35 @@ class MP3Trigger(object):
         For example, 0x0A will play the 10th MP3 file in the root directory.
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_PLAY_TRACK, track_number)
+        sleep(0.05)
 
     def play_file(self, file_number):
         """
         Play a file # from the root directory. For example, 0x03 will play F003.mp3.
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_PLAY_FILENUMBER, file_number)
+        sleep(0.05)
 
     def pause(self):
         """
         Pause if playing, or starting playing if paused
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_PAUSE)
+        sleep(0.05)
 
     def play_next(self):
         """
         Play the next file (next track) located in the root directory
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_PLAY_NEXT)
+        sleep(0.05)
 
     def play_previous(self):
         """
         Play the previous file (previous track) located in the root directory
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_PLAY_PREVIOUS)
+        sleep(0.05)
 
     def set_eq(self, eq):
         """
@@ -82,6 +88,7 @@ class MP3Trigger(object):
         if eq not in [self.EQ_NORMAL, self.EQ_POP, self.EQ_ROCK, self.EQ_JAZZ, self.EQ_CLASSICAL, self.EQ_BASS]:
             raise ValueError('Invalid EQ setting')
         self.bus.write_byte_data(self.device_address, self.COMMAND_SET_EQ, eq)
+        sleep(0.05)
 
     def get_eq(self):
         """
@@ -89,7 +96,9 @@ class MP3Trigger(object):
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_GET_ID)
         sleep(0.05)
-        return self.bus.read_byte_data(self.device_address, 0)
+        result = self.bus.read_byte_data(self.device_address, 0)
+        sleep(0.05)
+        return result
 
     def set_volume(self, volume_level):
         """
@@ -99,6 +108,7 @@ class MP3Trigger(object):
         if volume_level < 0 or volume_level > 31:
             raise ValueError('Invalid volume level')
         self.bus.write_byte_data(self.device_address, self.COMMAND_SET_VOLUME, volume_level)
+        sleep(0.05)
 
     def get_volume(self):
         """
@@ -106,7 +116,9 @@ class MP3Trigger(object):
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_GET_VOLUME)
         sleep(0.05)
-        return self.bus.read_byte_data(self.device_address, 0)
+        result = self.bus.read_byte_data(self.device_address, 0)
+        sleep(0.05)
+        return result
 
     def get_song_count(self):
         """
@@ -116,7 +128,9 @@ class MP3Trigger(object):
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_GET_SONG_COUNT)
         sleep(0.05)
-        return self.bus.read_byte_data(self.device_address, 0)
+        result = self.bus.read_byte_data(self.device_address, 0)
+        sleep(0.05)
+        return result
 
     def get_song_name(self):
         """
@@ -125,7 +139,9 @@ class MP3Trigger(object):
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_GET_SONG_NAME)
         sleep(0.05)
-        return self.bus.read_byte_data(self.device_address, 0)
+        result = self.bus.read_byte_data(self.device_address, 0)
+        sleep(0.05)
+        return result
 
     def get_id(self):
         """
@@ -133,7 +149,9 @@ class MP3Trigger(object):
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_GET_ID)
         sleep(0.05)
-        return self.bus.read_byte_data(self.device_address, 0)
+        result = self.bus.read_byte_data(self.device_address, 0)
+        sleep(0.05)
+        return result
 
     def get_card_status(self):
         """
@@ -142,7 +160,9 @@ class MP3Trigger(object):
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_GET_CARD_STATUS)
         sleep(0.05)
-        return self.bus.read_byte_data(self.device_address, 0)
+        result = self.bus.read_byte_data(self.device_address, 0)
+        sleep(0.05)
+        return result
 
     def get_version(self):
         """
@@ -150,19 +170,24 @@ class MP3Trigger(object):
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_GET_VERSION)
         sleep(0.05)
-        return self.bus.read_byte_data(self.device_address, 0)
+        result = self.bus.read_byte_data(self.device_address, 0)
+        sleep(0.05)
+        return result
 
     def clear_interrupts(self):
         """
         Clears the interrupt bit.
         """
         self.bus.write_byte_data(self.device_address, self.COMMAND_CLEAR_INTERRUPTS)
+        sleep(0.05)
 
     def get_play_status(self):
         """
         Returns a byte indicating MP3 player status. 0 = OK, 1 = Fail, 2 = No such file, 5 = SD Error.
         """
-        return self.bus.read_byte_data(self.device_address, self.COMMAND_GET_PLAY_STATUS)
+        result = self.bus.read_byte_data(self.device_address, self.COMMAND_GET_PLAY_STATUS)
+        sleep(0.05)
+        return result
 
     def set_address(self, address):
         """
@@ -173,3 +198,4 @@ class MP3Trigger(object):
         if address < 0x07 or address > 0x78:
             raise ValueError('Invalid I2C address')
         self.bus.write_byte_data(self.device_address, self.COMMAND_CHANGE_ADDRESS, address)
+        sleep(0.05)

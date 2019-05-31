@@ -33,3 +33,4 @@ class Relay(object):
         if address < 0x07 or address > 0x78:
             raise ValueError('Invalid I2C address')
         self.bus.write_byte_data(self.device_address, self.COMMAND_SET_ADDRESS, address)
+        sleep(0.05)
