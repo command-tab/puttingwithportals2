@@ -37,21 +37,23 @@ GPIO.setup(SERVO_PIN, GPIO.OUT)
 # Game state
 playing = False
 
-def handle_putt():
-    playing = True
-
+def release_ball():
     pwm = GPIO.PWM(SERVO_PIN, 50)
     pwm.start(7.5)
+    pwm.ChangeDutyCycle(7.5)  # turn towards 90 degree
+    time.sleep(1)
+    pwm.ChangeDutyCycle(2.5)  # turn towards 0 degree
+    time.sleep(1)
+    pwm.ChangeDutyCycle(12.5) # turn towards 180 degree
 
+def launch():
     relay.on()
-
-    p.ChangeDutyCycle(7.5)  # turn towards 90 degree
-    time.sleep(1)
-    p.ChangeDutyCycle(2.5)  # turn towards 0 degree
-    time.sleep(1)
-    p.ChangeDutyCycle(12.5) # turn towards 180 degree
-
+    release_ball()
     relay.off()
+
+def handle_putt():
+    playing = True
+    launch()
 
 def handle_cup():
     if playing:
