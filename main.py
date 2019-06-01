@@ -21,8 +21,9 @@ SERVO_PIN = 19  # (G19)
 # Start up
 launch_relay = Relay(I2C_BUS, RELAY_ADDRESS)
 sfx_mp3_trigger = MP3Trigger(I2C_BUS, MP3_ADDRESS)
-sfx_mp3_trigger.set_volume(0x03)
+sfx_mp3_trigger.set_volume(0x01)
 sfx_mp3_trigger.play_track(0x01)
+sleep(2)
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
