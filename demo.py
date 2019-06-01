@@ -10,7 +10,7 @@ MP3_ADDRESS = 0x37
 relay = Relay(I2C_BUS, RELAY_ADDRESS)
 mp3 = MP3Trigger(I2C_BUS, MP3_ADDRESS)
 
-mp3.set_volume(0x02)
+mp3.set_volume(0x01)
 mp3.play_track(0x02)
 sleep(2)
 mp3.play_track(0x01)
