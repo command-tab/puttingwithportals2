@@ -9,14 +9,14 @@ I2C_BUS = 1
 RELAY_ADDRESS = 0x18
 MP3_ADDRESS = 0x37
 
-# GPIO pin constants
-PUTT_SENSOR_PIN = 1
-CUP_SENSOR_PIN = 2
-RF_RX_A_PIN = 3
-RF_RX_B_PIN = 4
-RF_RX_C_PIN = 5
-RF_RX_D_PIN = 6
-SERVO_PIN = 7
+# GPIO pin constants using BCM numbering (Pi Wedge silkscreen in parens)
+PUTT_SENSOR_PIN = 18  # (G18)
+CUP_SENSOR_PIN = 20  # (G20)
+RF_RX_A_PIN = 17  # (G17)
+RF_RX_B_PIN = 16  # (G16)
+RF_RX_C_PIN = 13  # (G13)
+RF_RX_D_PIN = 12  # (G12)
+SERVO_PIN = 19  # (G19)
 
 # Start up
 launch_relay = Relay(I2C_BUS, RELAY_ADDRESS)
@@ -25,7 +25,7 @@ sfx_mp3_trigger.set_volume(0x03)
 sfx_mp3_trigger.play_track(0x01)
 
 GPIO.setwarnings(False)
-# GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 
 # Configure GPIO pin modes for each connected device type
 for pin in [PUTT_SENSOR_PIN, CUP_SENSOR_PIN]:
