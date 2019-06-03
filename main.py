@@ -3,82 +3,123 @@
 from qwiic import Relay, MP3Trigger
 from time import sleep
 import RPi.GPIO as GPIO
+import asyncio
+import sys
 
 # Qwiic I2C device constants
 I2C_BUS = 1
-RELAY_ADDRESS = 0x18
-MP3_ADDRESS = 0x37
+LAUNCH_RELAY_ADDRESS = 0x18
+MP3_TRIGGER_ADDRESS = 0x37
 
-# GPIO pin constants using BCM numbering (Pi Wedge silkscreen in parens)
-PUTT_SENSOR_PIN = 18  # (G18)
-CUP_SENSOR_PIN = 20  # (G20)
-RF_RX_A_PIN = 17  # (G17)
-RF_RX_B_PIN = 16  # (G16)
-RF_RX_C_PIN = 13  # (G13)
-RF_RX_D_PIN = 12  # (G12)
-SERVO_PIN = 19  # (G19)
+# GPIO pin constants use BCM numbering.
+# Sparkfun Pi Wedge prefixes BCM numbering with 'G'.
+PUTT_SENSOR_PIN = 18
+CUP_SENSOR_PIN = 20
 
-# Start up
-launch_relay = Relay(I2C_BUS, RELAY_ADDRESS)
-sfx_mp3_trigger = MP3Trigger(I2C_BUS, MP3_ADDRESS)
-sfx_mp3_trigger.set_volume(0x01)
-sfx_mp3_trigger.play_track(0x01)
-sleep(2)
+RF_RX_A_PIN = 21
+RF_RX_B_PIN = 22
+RF_RX_C_PIN = 23
+RF_RX_D_PIN = 24
 
-GPIO.setwarnings(False)
-GPIO.setmode(GPIO.BCM)
+SERVO_PIN = 19
 
-# Configure GPIO pin modes for each connected device type
-for pin in [PUTT_SENSOR_PIN, CUP_SENSOR_PIN]:
-    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-for pin in [RF_RX_A_PIN, RF_RX_B_PIN, RF_RX_C_PIN, RF_RX_D_PIN]:
-    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-GPIO.setup(SERVO_PIN, GPIO.OUT)
+# I2C devices
+launch_relay = Relay(I2C_BUS, LAUNCH_RELAY_ADDRESS)
+sfx_mp3_trigger = MP3Trigger(I2C_BUS, MP3_TRIGGER_ADDRESS)
 
-# Game state
+# Global game state
 playing = False
 
 def release_ball():
-    pwm = GPIO.PWM(SERVO_PIN, 50)
+    SERVO_FREQUENCY = 50  # 50 Hz
+    pwm = GPIO.PWM(SERVO_PIN, SERVO_FREQUENCY)
     pwm.start(7.5)
-    pwm.ChangeDutyCycle(7.5)  # turn towards 90 degree
-    time.sleep(1)
-    pwm.ChangeDutyCycle(2.5)  # turn towards 0 degree
-    time.sleep(1)
-    pwm.ChangeDutyCycle(12.5) # turn towards 180 degree
+    pwm.ChangeDutyCycle(2.5)  # 0 degrees
+    sleep(1)
+    pwm.ChangeDutyCycle(12.5) # 180 degrees
+    sleep(1)
+    #pwm.ChangeDutyCycle(7.5)  # 90 degrees
+    pwm.ChangeDutyCycle(2.5)  # 0 degrees
 
 def launch():
-    relay.on()
+    print('Launching')
+    launch_relay.on()
     release_ball()
-    relay.off()
+    launch_relay.off()
 
-def handle_putt():
-    playing = True
-    launch()
+def handle_putt(pin):
+    global playing
+    if not playing:
+        print('Detected putt')
+        playing = True
+        launch()
 
-def handle_cup():
+def handle_cup(pin):
+    global playing
     if playing:
-        sfx_mp3_trigger.play_track(0x03)
+        print('Detected cup sink')
+        sfx_mp3_trigger.play_track(0x04)
     playing = False
 
-def handle_sfx_a():
-   sfx_mp3_trigger.play_track(0x01)
+def handle_sfx_a(pin):
+    print('Playing SFX A')
+    sfx_mp3_trigger.play_track(0x02)
 
-def handle_sfx_b():
-   sfx_mp3_trigger.play_track(0x02)
+def handle_sfx_b(pin):
+    print('Playing SFX B')
+    sfx_mp3_trigger.play_track(0x03)
 
-def handle_sfx_c():
-   sfx_mp3_trigger.play_track(0x03)
+def handle_sfx_c(pin):
+    print('Playing SFX C')
+    sfx_mp3_trigger.play_track(0x04)
 
-def handle_sfx_d():
-   sfx_mp3_trigger.play_track(0x04)
+def handle_sfx_d(pin):
+    print('Playing SFX D')
+    sfx_mp3_trigger.play_track(0x05)
 
-# Add interrupts
-GPIO.add_event_detect(PUTT_SENSOR_PIN, GPIO.RISING, callback=handle_putt, bouncetime=100)
-GPIO.add_event_detect(CUP_SENSOR_PIN, GPIO.RISING, callback=handle_cup, bouncetime=100)
-GPIO.add_event_detect(RF_RX_A_PIN, GPIO.RISING, callback=handle_sfx_a, bouncetime=100)
-GPIO.add_event_detect(RF_RX_B_PIN, GPIO.RISING, callback=handle_sfx_b, bouncetime=100)
-GPIO.add_event_detect(RF_RX_C_PIN, GPIO.RISING, callback=handle_sfx_c, bouncetime=100)
-GPIO.add_event_detect(RF_RX_D_PIN, GPIO.RISING, callback=handle_sfx_d, bouncetime=100)
 
-# GPIO.cleanup()
+if __name__ == '__main__':
+    try:
+        # SFX
+        print('Powerup initiated')
+        sfx_mp3_trigger.set_volume(0x01)
+        sfx_mp3_trigger.play_track(0x01)
+        sleep(2)
+
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BCM)
+
+        # Configure GPIO pin modes for each connected device type
+        print('Configuring pins')
+        for pin in [PUTT_SENSOR_PIN, CUP_SENSOR_PIN]:
+            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Default high
+        for pin in [RF_RX_A_PIN, RF_RX_B_PIN, RF_RX_C_PIN, RF_RX_D_PIN]:
+            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  # Default low
+        GPIO.setup(SERVO_PIN, GPIO.OUT)
+
+        # Add interrupts
+        # IR bream-break sensors are default high when the beam is unbroken, and go low when broken.
+        # RF module pins go high for as long as the keyfob button is held.
+        print('Adding interrupts')
+        
+        GPIO.add_event_detect(PUTT_SENSOR_PIN, GPIO.FALLING, callback=handle_putt, bouncetime=100)
+        GPIO.add_event_detect(CUP_SENSOR_PIN, GPIO.FALLING, callback=handle_cup, bouncetime=100)
+        
+        GPIO.add_event_detect(RF_RX_A_PIN, GPIO.RISING, callback=handle_sfx_a, bouncetime=250)
+        GPIO.add_event_detect(RF_RX_B_PIN, GPIO.RISING, callback=handle_sfx_b, bouncetime=250)
+        GPIO.add_event_detect(RF_RX_C_PIN, GPIO.RISING, callback=handle_sfx_c, bouncetime=250)
+        GPIO.add_event_detect(RF_RX_D_PIN, GPIO.RISING, callback=handle_sfx_d, bouncetime=250)
+
+        # SFX
+        print('Powerup complete')
+        sfx_mp3_trigger.set_volume(0x01)
+        sfx_mp3_trigger.play_track(0x02)
+        sleep(2)
+
+        # Run the event loop
+        loop = asyncio.get_event_loop()
+        print('Awaiting putt')
+        loop.run_forever()
+        loop.close()
+    except KeyboardInterrupt:
+        sys.exit()
