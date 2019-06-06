@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+# Exercises the Qwiic I2C devices
+
 from qwiic import Relay, MP3Trigger
 from time import sleep
-
 
 I2C_BUS = 1
 RELAY_ADDRESS = 0x18
