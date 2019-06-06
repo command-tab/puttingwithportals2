@@ -112,7 +112,6 @@ if __name__ == '__main__':
 
         # SFX
         print('Powerup complete')
-        sfx_mp3_trigger.set_volume(0x01)
         sfx_mp3_trigger.play_track(0x02)
         sleep(2)
 
