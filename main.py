@@ -105,10 +105,10 @@ if __name__ == '__main__':
         GPIO.add_event_detect(PUTT_SENSOR_PIN, GPIO.FALLING, callback=handle_putt, bouncetime=100)
         GPIO.add_event_detect(CUP_SENSOR_PIN, GPIO.FALLING, callback=handle_cup, bouncetime=100)
         
-        GPIO.add_event_detect(RF_RX_A_PIN, GPIO.RISING, callback=handle_sfx_a, bouncetime=250)
-        GPIO.add_event_detect(RF_RX_B_PIN, GPIO.RISING, callback=handle_sfx_b, bouncetime=250)
-        GPIO.add_event_detect(RF_RX_C_PIN, GPIO.RISING, callback=handle_sfx_c, bouncetime=250)
-        GPIO.add_event_detect(RF_RX_D_PIN, GPIO.RISING, callback=handle_sfx_d, bouncetime=250)
+        GPIO.add_event_detect(RF_RX_A_PIN, GPIO.RISING, callback=handle_sfx_a, bouncetime=500)
+        GPIO.add_event_detect(RF_RX_B_PIN, GPIO.RISING, callback=handle_sfx_b, bouncetime=500)
+        GPIO.add_event_detect(RF_RX_C_PIN, GPIO.RISING, callback=handle_sfx_c, bouncetime=500)
+        GPIO.add_event_detect(RF_RX_D_PIN, GPIO.RISING, callback=handle_sfx_d, bouncetime=500)
 
         # SFX
         print('Powerup complete')
