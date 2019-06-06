@@ -31,15 +31,23 @@ sfx_mp3_trigger = MP3Trigger(I2C_BUS, MP3_TRIGGER_ADDRESS)
 playing = False
 
 def release_ball():
+    """
+    Releases exactly on golf ball from the queue using a servo
+    with two piano wire obstructors inserted into a pipe. When one
+    obstructor moves out of the way to let the balls roll, the other
+    blocks them all one ball away, so the whole queue only advances by one.
+    No longer obstructed, the end ball is released and rolls away.
+    """
     SERVO_FREQUENCY = 50  # 50 Hz
+    OBSTRUCTOR_CLOSED_DUTY_CYCLE = 4.5
+    OBSTRUCTOR_OPEN_DUTY_CYCLE = 10
     pwm = GPIO.PWM(SERVO_PIN, SERVO_FREQUENCY)
     pwm.start(7.5)
-    pwm.ChangeDutyCycle(2.5)  # 0 degrees
+    pwm.ChangeDutyCycle(OBSTRUCTOR_CLOSED_DUTY_CYCLE)
     sleep(1)
-    pwm.ChangeDutyCycle(12.5) # 180 degrees
+    pwm.ChangeDutyCycle(OBSTRUCTOR_OPEN_DUTY_CYCLE)
     sleep(1)
-    #pwm.ChangeDutyCycle(7.5)  # 90 degrees
-    pwm.ChangeDutyCycle(2.5)  # 0 degrees
+    pwm.ChangeDutyCycle(OBSTRUCTOR_CLOSED_DUTY_CYCLE)
 
 def launch():
     print('Launching')
