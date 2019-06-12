@@ -11,24 +11,32 @@ I2C_BUS = 1
 LAUNCH_RELAY_ADDRESS = 0x18
 MP3_TRIGGER_ADDRESS = 0x37
 
-# GPIO pin constants use BCM numbering.
-# Sparkfun Pi Wedge prefixes BCM numbering with 'G'.
+# GPIO pin constants (using BCM numbering)
 PUTT_SENSOR_PIN = 18
 CUP_SENSOR_PIN = 20
-
-RF_RX_A_PIN = 21
-RF_RX_B_PIN = 22
-RF_RX_C_PIN = 23
-RF_RX_D_PIN = 24
-
+RF_RX_A_PIN = 21  # Greetings
+RF_RX_B_PIN = 27  # Non sequiturs
+RF_RX_C_PIN = 23  # Taunts
+RF_RX_D_PIN = 24  # Clear game state (if player picks up ball without tripping cup sensor)
 SERVO_PIN = 19
 
 # I2C devices
 launch_relay = Relay(I2C_BUS, LAUNCH_RELAY_ADDRESS)
-sfx_mp3_trigger = MP3Trigger(I2C_BUS, MP3_TRIGGER_ADDRESS)
+mp3_trigger = MP3Trigger(I2C_BUS, MP3_TRIGGER_ADDRESS)
 
 # Global game state
 playing = False
+
+# Last audio tracks played (to avoid playing the same audio again soon)
+last_non_sequitur_index = None
+last_taunt_index = None
+last_congratulation_index = None
+
+audio_greeting = 1  # 1 greeting track
+audio_non_sequiturs = list(range(2, 11))  # 9 tracks
+audio_taunts = list(range(11, 22))  # 11 tracks
+audio_congratulations = list(range(22, 40))  # 18 tracks
+
 
 def release_ball():
     """
@@ -49,11 +57,13 @@ def release_ball():
     sleep(1)
     pwm.ChangeDutyCycle(OBSTRUCTOR_CLOSED_DUTY_CYCLE)
 
+
 def launch():
     print('Launching')
     launch_relay.on()
     release_ball()
     launch_relay.off()
+
 
 def handle_putt(pin):
     global playing
@@ -62,37 +72,106 @@ def handle_putt(pin):
         playing = True
         launch()
 
+
 def handle_cup(pin):
     global playing
     if playing:
         print('Detected cup sink')
-        sfx_mp3_trigger.play_track(0x04)
+
+        # Play next congratulation
+        global mp3_trigger
+        global last_congratulation_index
+        global audio_congratulations
+
+        if last_congratulation_index:
+            i = audio_congratulations.index(last_congratulation_index)
+            if (i + 1) > len(audio_congratulations):
+                # Return to beginning of audio list if we've reached the end
+                i = 0
+            else:
+                # Advance to the next track
+                i = i + 1
+            track = audio_congratulations[i]
+            last_congratulation_index = i
+        else:
+            track = audio_congratulations[0]
+            last_congratulation_index = 0
+        print('Playing T{0:03d}.mp3'.format(audio_congratulations[i - 1]))
+        mp3_trigger.play_track(track)
+
     playing = False
 
-def handle_sfx_a(pin):
-    print('Playing SFX A')
-    sfx_mp3_trigger.play_track(0x02)
 
-def handle_sfx_b(pin):
-    print('Playing SFX B')
-    sfx_mp3_trigger.play_track(0x03)
+def handle_rf_a(pin):
+    print('Pressed RF A - Greeting')
 
-def handle_sfx_c(pin):
-    print('Playing SFX C')
-    sfx_mp3_trigger.play_track(0x04)
+    # Play greeting
+    global mp3_trigger
+    global audio_greeting
+    mp3_trigger.play_track(audio_greeting)
 
-def handle_sfx_d(pin):
-    print('Playing SFX D')
-    sfx_mp3_trigger.play_track(0x05)
+
+def handle_rf_b(pin):
+    print('Pressed RF B - Non sequitur')
+
+    # Play next congratulation
+    global mp3_trigger
+    global last_non_sequitur_index
+    global audio_non_sequiturs
+
+    if last_non_sequitur_index:
+        i = audio_non_sequiturs.index(last_non_sequitur_index)
+        if (i + 1) > len(audio_non_sequiturs):
+            # Return to beginning of audio list if we've reached the end
+            i = 0
+        else:
+            # Advance to the next track
+            i = i + 1
+        track = audio_non_sequiturs[i]
+        last_non_sequitur_index = i
+    else:
+        track = audio_non_sequiturs[0]
+        last_non_sequitur_index = 0
+    print('Playing T{0:03d}.mp3'.format(audio_non_sequiturs[i - 1]))
+    mp3_trigger.play_track(track)
+
+
+def handle_rf_c(pin):
+    print('Pressed RF C - Taunt')
+
+    # Play next congratulation
+    global mp3_trigger
+    global last_taunt_index
+    global audio_taunts
+
+    if last_taunt_index:
+        i = audio_taunts.index(last_taunt_index)
+        if (i + 1) > len(audio_taunts):
+            # Return to beginning of audio list if we've reached the end
+            i = 0
+        else:
+            # Advance to the next track
+            i = i + 1
+        track = audio_taunts[i]
+        last_taunt_index = i
+    else:
+        track = audio_taunts[0]
+        last_taunt_index = 0
+    print('Playing T{0:03d}.mp3'.format(audio_taunts[i - 1]))
+    mp3_trigger.play_track(track)
+
+
+def handle_rf_d(pin):
+    print('Pressed RF D - Reset game state')
+    global playing
+    playing = False
 
 
 if __name__ == '__main__':
     try:
-        # SFX
-        print('Powerup initiated')
-        sfx_mp3_trigger.set_volume(0x01)
-        sfx_mp3_trigger.play_track(0x01)
-        sleep(2)
+        # Initial setup
+        print('Starting up')
+        mp3_trigger.set_volume(0x05)
 
         GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
@@ -100,28 +179,25 @@ if __name__ == '__main__':
         # Configure GPIO pin modes for each connected device type
         print('Configuring pins')
         for pin in [PUTT_SENSOR_PIN, CUP_SENSOR_PIN]:
-            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Default high
+            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         for pin in [RF_RX_A_PIN, RF_RX_B_PIN, RF_RX_C_PIN, RF_RX_D_PIN]:
-            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)  # Default low
+            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(SERVO_PIN, GPIO.OUT)
 
         # Add interrupts
-        # IR bream-break sensors are default high when the beam is unbroken, and go low when broken.
         # RF module pins go high for as long as the keyfob button is held.
         print('Adding interrupts')
-        
-        GPIO.add_event_detect(PUTT_SENSOR_PIN, GPIO.FALLING, callback=handle_putt, bouncetime=100)
-        GPIO.add_event_detect(CUP_SENSOR_PIN, GPIO.FALLING, callback=handle_cup, bouncetime=100)
-        
-        GPIO.add_event_detect(RF_RX_A_PIN, GPIO.RISING, callback=handle_sfx_a, bouncetime=500)
-        GPIO.add_event_detect(RF_RX_B_PIN, GPIO.RISING, callback=handle_sfx_b, bouncetime=500)
-        GPIO.add_event_detect(RF_RX_C_PIN, GPIO.RISING, callback=handle_sfx_c, bouncetime=500)
-        GPIO.add_event_detect(RF_RX_D_PIN, GPIO.RISING, callback=handle_sfx_d, bouncetime=500)
 
-        # SFX
-        print('Powerup complete')
-        sfx_mp3_trigger.play_track(0x02)
-        sleep(2)
+        # IR sensor output is default high, and IR sensors are *NOT* inverted, just level shifted from 5V to 3.3V
+        GPIO.add_event_detect(PUTT_SENSOR_PIN, GPIO.FALLING, callback=handle_putt, bouncetime=1000)
+        GPIO.add_event_detect(CUP_SENSOR_PIN, GPIO.FALLING, callback=handle_cup, bouncetime=1000)
+
+        # RF receiver output is default low, but inverted by Schmitt trigger then level shifted from 5V to 3.3V.
+        # Pins remain changed for as long as the keyfob button is held down.
+        GPIO.add_event_detect(RF_RX_A_PIN, GPIO.FALLING, callback=handle_rf_a, bouncetime=1000)
+        GPIO.add_event_detect(RF_RX_B_PIN, GPIO.FALLING, callback=handle_rf_b, bouncetime=1000)
+        GPIO.add_event_detect(RF_RX_C_PIN, GPIO.FALLING, callback=handle_rf_c, bouncetime=1000)
+        GPIO.add_event_detect(RF_RX_D_PIN, GPIO.FALLING, callback=handle_rf_d, bouncetime=1000)
 
         # Run the event loop
         loop = asyncio.get_event_loop()
